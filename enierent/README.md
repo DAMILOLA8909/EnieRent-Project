@@ -1,5 +1,5 @@
 # 🏠 EnieRent - Property Rental Platform
-    <div align="center">
+<div align="center">
     https://img.shields.io/badge/EnieRent-Housing_Solution-blue
     https://img.shields.io/badge/Next.js-14-black
     https://img.shields.io/badge/TypeScript-5-blue
@@ -11,7 +11,7 @@
 
     Live Demo · Report Bug · Request Feature
 
-    </div>
+</div>
 
 ## 📋 Table of Contents
 - 🌟 Features
