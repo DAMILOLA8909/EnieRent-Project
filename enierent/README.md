@@ -6,11 +6,10 @@
     <img src = "https://img.shields.io/badge/Tailwind_CSS-4-38B2AC">
     <img src = "https://img.shields.io/badge/React-18-61DAFB">
     <img src = "https://img.shields.io/badge/License-MIT-green">
-
-    Find Your Perfect Home in Nigeria
-
-    [Live Demo](https://enie-rent-project.vercel.app/) · Report Bug · Request Feature
-
+</div>
+<div align="center">
+ Find Your Perfect Home in Nigeria
+ [Live Demo](https://enie-rent-project.vercel.app/) · Report Bug · Request Feature
 </div>
 
 ## 📋 Table of Contents
