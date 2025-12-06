@@ -110,7 +110,7 @@
 
 ### 🚀 Live Demo
 
-Experience EnieRent live: `[enierent.vercel.app](https://enie-rent-project.vercel.app/)`
+Experience EnieRent live: [enierent.vercel.app](https://enie-rent-project.vercel.app/)
 
 Demo Credentials:
 ```text
