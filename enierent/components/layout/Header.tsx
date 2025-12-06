@@ -1,19 +1,50 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, User, Heart, Bell, Menu, X, Home } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { 
+  Search, User, Heart, Bell, Menu, X, Home, 
+  LogOut, Settings, Home as HomeIcon
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { useAuthStore } from '@/lib/auth-store'
+import toast from 'react-hot-toast'
 
 export default function Header() {
+  const router = useRouter()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+
+  useEffect(() => {
+    // Check auth on mount
+    useAuthStore.getState().checkAuth()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Searching for:', searchQuery)
+    if (searchQuery.trim()) {
+      router.push(`/properties?search=${encodeURIComponent(searchQuery)}`)
+    }
+  }
+
+  const handleLogout = () => {
+    logout()
+    toast.success('Logged out successfully')
+    setIsUserMenuOpen(false)
+    router.push('/')
+  }
+
+  const navigateToDashboard = () => {
+    if (user?.role === 'landlord') {
+      router.push('/dashboard/add-property')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   return (
@@ -22,7 +53,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <Home className="size-6 text-primary" />
+            <HomeIcon className="size-6 text-primary" />
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               EnieRent
             </span>
@@ -40,6 +71,11 @@ export default function Header() {
           <Link href="/properties" className="text-sm font-medium hover:text-primary transition-colors">
             Properties
           </Link>
+          {isAuthenticated && user?.role === 'landlord' && (
+            <Link href="/dashboard/add-property" className="text-sm font-medium hover:text-primary transition-colors">
+              Add Property
+            </Link>
+          )}
           <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
             About
           </Link>
@@ -64,18 +100,92 @@ export default function Header() {
 
         {/* User Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex">
-            <Heart className="size-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex relative">
-            <Bell className="size-5" />
-            <span className="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full"></span>
-          </Button>
-          <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
-            <User className="size-4" />
-            Sign In
-          </Button>
-          <Button className="hidden sm:flex">List Property</Button>
+          {isAuthenticated ? (
+            <>
+              <Button variant="ghost" size="icon" className="hidden sm:inline-flex">
+                <Heart className="size-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="hidden sm:inline-flex relative">
+                <Bell className="size-5" />
+                <span className="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full"></span>
+              </Button>
+              
+              {/* User Menu */}
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                >
+                  <User className="size-4" />
+                  {user?.name?.split(' ')[0] || 'Account'}
+                </Button>
+
+                {isUserMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-background border rounded-lg shadow-lg z-50">
+                      <div className="p-4 border-b">
+                        <div className="font-medium">{user?.name}</div>
+                        <div className="text-sm text-muted-foreground">{user?.email}</div>
+                        <div className="text-xs text-primary mt-1 capitalize">
+                          {user?.role}
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <button
+                          onClick={() => {
+                            router.push('/dashboard')
+                            setIsUserMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-secondary rounded-md transition-colors"
+                        >
+                          Dashboard
+                        </button>
+                        <button
+                          onClick={() => {
+                            router.push('/dashboard/settings')
+                            setIsUserMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-secondary rounded-md transition-colors"
+                        >
+                          Settings
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 hover:bg-secondary rounded-md transition-colors text-red-500"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex gap-2"
+                onClick={() => router.push('/login')}
+              >
+                <User className="size-4" />
+                Sign In
+              </Button>
+              <Button 
+                className="hidden sm:flex"
+                onClick={() => router.push('/register')}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
           
           {/* Mobile Menu Button */}
           <Button
@@ -114,7 +224,7 @@ export default function Header() {
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent"
               onClick={() => setIsMenuOpen(false)}
             >
-              <Home className="size-4" />
+              <HomeIcon className="size-4" />
               Home
             </Link>
             <Link
@@ -124,27 +234,65 @@ export default function Header() {
             >
               Properties
             </Link>
-            <Link
-              href="/about"
-              className="block p-2 rounded-lg hover:bg-accent"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="block p-2 rounded-lg hover:bg-accent"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contact
-            </Link>
-            <div className="pt-2 border-t">
-              <Button variant="outline" className="w-full justify-start gap-2 mb-2">
-                <User className="size-4" />
-                Sign In
-              </Button>
-              <Button className="w-full">List Property</Button>
-            </div>
+            
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="block p-2 rounded-lg hover:bg-accent"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/saved"
+                  className="block p-2 rounded-lg hover:bg-accent"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Saved Properties
+                </Link>
+                {user?.role === 'landlord' && (
+                  <Link
+                    href="/dashboard/add-property"
+                    className="block p-2 rounded-lg hover:bg-accent"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Add Property
+                  </Link>
+                )}
+                <div className="pt-2 border-t">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left p-2 rounded-lg hover:bg-accent text-red-500"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="pt-2 border-t">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 mb-2"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    router.push('/login')
+                  }}
+                >
+                  <User className="size-4" />
+                  Sign In
+                </Button>
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    router.push('/register')
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </div>
+            )}
           </nav>
         </div>
       )}
