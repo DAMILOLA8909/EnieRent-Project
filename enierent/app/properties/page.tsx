@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import PropertyCard from '@/components/properties/PropertyCard'
 import FilterSidebar from '@/components/properties/FilterSidebar'
 import SortDropdown from '@/components/properties/SortDropdown'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { usePropertyStore } from '@/lib/store'
 
 export default function PropertiesPage() {
@@ -45,10 +46,11 @@ export default function PropertiesPage() {
     }
   }
 
+  // Early return for no properties (keep your existing logic)
   if (filteredProperties.length === 0) {
     return (
-      <div className="min-h-screen pt-20">
-        <div className="container mx-auto px-4">
+      <LayoutWrapper>
+        <div className="container mx-auto px-4 py-20">
           <div className="text-center py-20">
             <h1 className="text-4xl font-bold mb-6">No Properties Found</h1>
             <p className="text-muted-foreground mb-8">
@@ -59,12 +61,12 @@ export default function PropertiesPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </LayoutWrapper>
     )
   }
 
   return (
-    <div className="min-h-screen pt-20">
+    <LayoutWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -184,6 +186,6 @@ export default function PropertiesPage() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutWrapper>
   )
 }

@@ -5,15 +5,17 @@ import Image from 'next/image'
 import { 
   MapPin, Bed, Bath, Square, Star, Heart, Share2, 
   Wifi, Car, Snowflake, Dumbbell, Shield, Droplets,
-  Calendar, Phone, MessageSquare, CheckCircle, Users
+  Calendar, Phone, MessageSquare, CheckCircle, Users,
+  ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import ContactModal from '@/components/properties/ContactModal'
-import ScheduleModal from '@/components/properties/ScheduleModal'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
+import ContactModal from './ContactModal'
+import ScheduleModal from './ScheduleModal'
 import { Property } from '@/types'
 import { formatPrice, formatDate } from '@/lib/utils'
+import Link from 'next/link'
 
 interface SinglePropertyPageProps {
   property: Property
@@ -47,17 +49,29 @@ export default function SinglePropertyPage({ property }: SinglePropertyPageProps
   }
 
   return (
-    <div className="min-h-screen pt-20">
+    <LayoutWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="text-sm text-muted-foreground mb-6">
-          <a href="/" className="hover:text-primary">Home</a>
+          <Link href="/" className="hover:text-primary">Home</Link>
           {' > '}
-          <a href="/properties" className="hover:text-primary">Properties</a>
+          <Link href="/properties" className="hover:text-primary">Properties</Link>
           {' > '}
-          <span className="font-medium">{property.title}</span>
+          <span className="font-medium line-clamp-1">{property.title}</span>
         </nav>
 
+        {/* Back Button - MOVED OUTSIDE THE GRID */}
+        <div className="mb-6">
+          <Link
+            href="/properties"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80"
+          >
+            <ArrowLeft className="size-4" />
+            Back to Properties
+          </Link>
+        </div>
+
+        {/* MAIN CONTENT GRID - This should start here */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -359,6 +373,6 @@ export default function SinglePropertyPage({ property }: SinglePropertyPageProps
         onClose={() => setShowScheduleModal(false)}
         property={property}
       />
-    </div>
+    </LayoutWrapper>
   )
 }

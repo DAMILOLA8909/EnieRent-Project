@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { useAuthStore } from '@/lib/auth-store'
 import { mockProperties } from '@/data/mockData'
 import PropertyCard from '@/components/properties/PropertyCard'
@@ -30,7 +31,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen pt-20">
+      <LayoutWrapper>
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -250,7 +251,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+      </LayoutWrapper>
     </ProtectedRoute>
   )
 }
