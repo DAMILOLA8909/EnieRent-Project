@@ -1,11 +1,11 @@
 # 🏠 EnieRent - Property Rental Platform
 <div align="center">
-    https://img.shields.io/badge/EnieRent-Housing_Solution-blue
-    https://img.shields.io/badge/Next.js-14-black
-    https://img.shields.io/badge/TypeScript-5-blue
-    https://img.shields.io/badge/Tailwind_CSS-4-38B2AC
-    https://img.shields.io/badge/React-18-61DAFB
-    https://img.shields.io/badge/License-MIT-green
+    <img src = "https://img.shields.io/badge/EnieRent-Housing_Solution-blue">
+    <img src = "https://img.shields.io/badge/Next.js-14-black">
+    <img src = "https://img.shields.io/badge/TypeScript-5-blue">
+    <img src = "https://img.shields.io/badge/Tailwind_CSS-4-38B2AC">
+    <img src = "https://img.shields.io/badge/React-18-61DAFB">
+    <img src = "https://img.shields.io/badge/License-MIT-green">
 
     Find Your Perfect Home in Nigeria
 
@@ -110,7 +110,7 @@
 
 ### 🚀 Live Demo
 
-Experience EnieRent live: `enierent.vercel.app`
+Experience EnieRent live: `[enierent.vercel.app](https://enie-rent-project.vercel.app/)`
 
 Demo Credentials:
 ```text
