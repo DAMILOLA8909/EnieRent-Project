@@ -9,7 +9,7 @@
 
     Find Your Perfect Home in Nigeria
 
-    Live Demo · Report Bug · Request Feature
+    [Live Demo](https://enie-rent-project.vercel.app/) · Report Bug · Request Feature
 
 </div>
 
