@@ -1,23 +1,30 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Home, Settings, LogOut, Heart, Calendar, 
-  MessageSquare, Bell, User, Shield, Plus
+  MessageSquare, Bell, User, Shield, Plus,
+  DollarSign, Map, Search, BarChart3
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { useAuthStore } from '@/lib/auth-store'
-import { mockProperties } from '@/data/mockData'
+import { mockProperties } from '@/data/mockData' // Add this import
 import PropertyCard from '@/components/properties/PropertyCard'
+import PropertyManagement from '@/components/dashboard/PropertyManagement'
+import FavoritesSection from '@/components/dashboard/FavoritesSection'
+import AddPropertyForm from '@/components/dashboard/AddPropertyForm'
 import toast from 'react-hot-toast'
+import { Property } from '@/types' // Add this import
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const [showAddProperty, setShowAddProperty] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
 
   const handleLogout = () => {
     logout()
@@ -25,9 +32,26 @@ export default function DashboardPage() {
     router.push('/')
   }
 
-  const savedProperties = mockProperties.filter(property => 
-    user?.savedProperties.includes(property.id)
-  )
+  const handlePropertyAdded = () => {
+    toast.success('Property added successfully!')
+  }
+
+  // Fix: Calculate savedProperties with proper typing
+  const savedProperties = useMemo(() => {
+    if (!user?.savedProperties?.length) return []
+    return mockProperties.filter((property: Property) => 
+      user.savedProperties.includes(property.id)
+    )
+  }, [user])
+
+  // Fix: Sample recent activity with proper typing
+  const recentActivities = [
+    { action: 'Viewed', property: 'Modern 2-Bedroom Apartment in Ikeja', time: '2 hours ago' },
+    { action: 'Saved', property: 'Luxury Penthouse in Banana Island', time: '1 day ago' },
+    { action: 'Scheduled visit for', property: '3-Bedroom Bungalow in Surulere', time: '2 days ago' },
+  ] as const
+
+  if (!user) return null
 
   return (
     <ProtectedRoute>
@@ -38,7 +62,7 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
               <p className="text-muted-foreground">
-                Welcome back, {user?.name}! 👋
+                Welcome back, {user.name}! 👋
               </p>
             </div>
             <div className="flex gap-2">
@@ -46,8 +70,8 @@ export default function DashboardPage() {
                 <Home className="size-4 mr-2" />
                 Browse Properties
               </Button>
-              {user?.role === 'landlord' && (
-                <Button onClick={() => router.push('/dashboard/add-property')}>
+              {user.role === 'landlord' && (
+                <Button onClick={() => setShowAddProperty(true)}>
                   <Plus className="size-4 mr-2" />
                   Add Property
                 </Button>
@@ -65,28 +89,38 @@ export default function DashboardPage() {
                     <div className="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                       <User className="size-10 text-primary" />
                     </div>
-                    <h3 className="font-bold text-lg">{user?.name}</h3>
+                    <h3 className="font-bold text-lg">{user.name}</h3>
                     <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mt-1">
                       <Shield className="size-3" />
-                      {user?.role === 'tenant' ? 'Tenant' : 'Landlord'}
+                      {user.role === 'tenant' ? 'Tenant' : 'Landlord'}
                     </div>
                   </div>
 
                   {/* Navigation */}
-                  <nav className="space-y-2">
+                  <nav className="space-y-1">
                     <button
-                      onClick={() => router.push('/dashboard')}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      onClick={() => setActiveTab('overview')}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        activeTab === 'overview'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-secondary'
+                      }`}
+                      type="button"
                     >
-                      <Home className="size-4" />
+                      <BarChart3 className="size-4" />
                       Overview
                     </button>
                     <button
-                      onClick={() => router.push('/dashboard/saved')}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      onClick={() => setActiveTab('favorites')}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        activeTab === 'favorites'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-secondary'
+                      }`}
+                      type="button"
                     >
                       <Heart className="size-4" />
-                      Saved Properties
+                      Favorites
                       {savedProperties.length > 0 && (
                         <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                           {savedProperties.length}
@@ -94,29 +128,51 @@ export default function DashboardPage() {
                       )}
                     </button>
                     <button
-                      onClick={() => router.push('/dashboard/visits')}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      onClick={() => setActiveTab('bookings')}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        activeTab === 'bookings'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-secondary'
+                      }`}
+                      type="button"
                     >
                       <Calendar className="size-4" />
-                      Scheduled Visits
+                      Bookings
                     </button>
+                    {user.role === 'landlord' && (
+                      <button
+                        onClick={() => setActiveTab('properties')}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          activeTab === 'properties'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-secondary'
+                        }`}
+                        type="button"
+                      >
+                        <Home className="size-4" />
+                        My Properties
+                      </button>
+                    )}
                     <button
-                      onClick={() => router.push('/dashboard/messages')}
+                      onClick={() => router.push('/chat')}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      type="button"
                     >
                       <MessageSquare className="size-4" />
                       Messages
                     </button>
                     <button
-                      onClick={() => router.push('/dashboard/notifications')}
+                      onClick={() => setActiveTab('notifications')}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      type="button"
                     >
                       <Bell className="size-4" />
                       Notifications
                     </button>
                     <button
-                      onClick={() => router.push('/dashboard/settings')}
+                      onClick={() => setActiveTab('settings')}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                      type="button"
                     >
                       <Settings className="size-4" />
                       Settings
@@ -141,13 +197,17 @@ export default function DashboardPage() {
             {/* Main Content */}
             <div className="lg:col-span-3 space-y-8">
               {/* Stats Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-2xl font-bold">12</div>
-                        <div className="text-sm text-muted-foreground">Properties Viewed</div>
+                        <div className="text-2xl font-bold">
+                          {user.role === 'tenant' ? '12' : '5'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.role === 'tenant' ? 'Properties Viewed' : 'Total Listings'}
+                        </div>
                       </div>
                       <div className="p-3 bg-primary/10 rounded-lg">
                         <Home className="size-6 text-primary" />
@@ -160,8 +220,12 @@ export default function DashboardPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-2xl font-bold">5</div>
-                        <div className="text-sm text-muted-foreground">Saved Properties</div>
+                        <div className="text-2xl font-bold">
+                          {user.role === 'tenant' ? savedProperties.length : '23'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.role === 'tenant' ? 'Saved Properties' : 'Total Views'}
+                        </div>
                       </div>
                       <div className="p-3 bg-green-500/10 rounded-lg">
                         <Heart className="size-6 text-green-500" />
@@ -174,8 +238,12 @@ export default function DashboardPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-2xl font-bold">3</div>
-                        <div className="text-sm text-muted-foreground">Scheduled Visits</div>
+                        <div className="text-2xl font-bold">
+                          {user.role === 'tenant' ? '3' : '7'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.role === 'tenant' ? 'Scheduled Visits' : 'Total Inquiries'}
+                        </div>
                       </div>
                       <div className="p-3 bg-blue-500/10 rounded-lg">
                         <Calendar className="size-6 text-blue-500" />
@@ -185,72 +253,108 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              {/* Saved Properties */}
+              {/* Dynamic Content Based on Active Tab */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="size-5" />
-                    Saved Properties
+                  <CardTitle>
+                    {activeTab === 'overview' && 'Dashboard Overview'}
+                    {activeTab === 'favorites' && 'Favorite Properties'}
+                    {activeTab === 'bookings' && 'Booking History'}
+                    {activeTab === 'properties' && 'Property Management'}
+                    {activeTab === 'messages' && 'Messages'}
+                    {activeTab === 'notifications' && 'Notifications'}
+                    {activeTab === 'settings' && 'Settings'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {savedProperties.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {savedProperties.map((property) => (
-                        <PropertyCard 
-                          key={property.id} 
-                          property={property} 
-                          compact 
-                        />
-                      ))}
+                  {activeTab === 'overview' && (
+                    <div className="space-y-8">
+                      {user.role === 'tenant' ? (
+                        <FavoritesSection />
+                      ) : (
+                        <PropertyManagement userId={user.id} />
+                      )}
+                      
+                      {/* Recent Activity */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+                        <div className="space-y-4">
+                          {recentActivities.map((activity, index) => (
+                            <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                {activity.action === 'Viewed' && <Home className="size-5 text-primary" />}
+                                {activity.action === 'Saved' && <Heart className="size-5 text-red-500" />}
+                                {activity.action === 'Scheduled visit for' && <Calendar className="size-5 text-blue-500" />}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium">
+                                  {activity.action} <span className="text-primary">{activity.property}</span>
+                                </div>
+                                <div className="text-sm text-muted-foreground">{activity.time}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {activeTab === 'favorites' && user.role === 'tenant' && (
+                    <FavoritesSection />
+                  )}
+
+                  {activeTab === 'bookings' && user.role === 'tenant' && (
                     <div className="text-center py-12">
-                      <Heart className="size-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No saved properties yet</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Start browsing properties and save your favorites
+                      <Calendar className="size-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Booking History</h3>
+                      <p className="text-muted-foreground">
+                        View and manage your scheduled property visits
                       </p>
-                      <Button onClick={() => router.push('/properties')}>
-                        Browse Properties
+                    </div>
+                  )}
+
+                  {activeTab === 'properties' && user.role === 'landlord' && (
+                    <PropertyManagement userId={user.id} />
+                  )}
+
+                  {activeTab === 'messages' && (
+                    <div className="text-center py-12">
+                      <MessageSquare className="size-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Messages</h3>
+                      <p className="text-muted-foreground">
+                        Chat with landlords and tenants about properties
+                      </p>
+                      <Button 
+                        onClick={() => router.push('/chat')}
+                        className="mt-4"
+                      >
+                        Go to Chat
                       </Button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
 
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { action: 'Viewed', property: 'Modern 2-Bedroom Apartment in Ikeja', time: '2 hours ago' },
-                      { action: 'Saved', property: 'Luxury Penthouse in Banana Island', time: '1 day ago' },
-                      { action: 'Scheduled visit for', property: '3-Bedroom Bungalow in Surulere', time: '2 days ago' },
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          {activity.action === 'Viewed' && <Home className="size-5 text-primary" />}
-                          {activity.action === 'Saved' && <Heart className="size-5 text-red-500" />}
-                          {activity.action === 'Scheduled visit for' && <Calendar className="size-5 text-blue-500" />}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {activity.action} <span className="text-primary">{activity.property}</span>
-                          </div>
-                          <div className="text-sm text-muted-foreground">{activity.time}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {activeTab === 'settings' && (
+                    <div className="text-center py-12">
+                      <Settings className="size-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Settings</h3>
+                      <p className="text-muted-foreground">
+                        Manage your account preferences and notifications
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
+
+        {/* Add Property Modal */}
+        {showAddProperty && (
+          <AddPropertyForm
+            onClose={() => setShowAddProperty(false)}
+            onSuccess={handlePropertyAdded}
+          />
+        )}
       </LayoutWrapper>
     </ProtectedRoute>
   )
