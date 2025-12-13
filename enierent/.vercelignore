@@ -1,0 +1,5 @@
+# Ignore old middleware files
+**/middleware.*
+# Ignore build caches
+.next
+node_modules
