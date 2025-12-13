@@ -1,14 +1,13 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { MapPin, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Property } from '@/types'
 import toast from 'react-hot-toast'
-import 'leaflet/dist/leaflet.css'
 
-// Dynamically import Leaflet to avoid SSR issues
+// Dynamically import ALL Leaflet components with SSR disabled
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
   { ssr: false }
@@ -34,49 +33,41 @@ const AttributionControl = dynamic(
   { ssr: false }
 )
 
-// Import Leaflet types
-import L from 'leaflet'
-
-// Fix for default markers in React Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-  iconUrl: '/leaflet/images/marker-icon.png',
-  shadowUrl: '/leaflet/images/marker-shadow.png',
-})
-
 interface PropertyMapProps {
   properties: Property[]
   center?: [number, number]
   zoom?: number
   showFindNearMe?: boolean
+  className?: string
 }
 
 export default function PropertyMap({ 
   properties, 
-  center = [6.5244, 3.3792], // Default to Lagos
+  center = [6.5244, 3.3792],
   zoom = 12,
-  showFindNearMe = true 
+  showFindNearMe = true,
+  className = ''
 }: PropertyMapProps) {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [isClient, setIsClient] = useState(false)
-  const [isLeafletLoaded, setIsLeafletLoaded] = useState(false)
+  const [L, setL] = useState<any>(null)
 
   useEffect(() => {
     setIsClient(true)
     
-    // Load Leaflet dynamically
-    const loadLeaflet = async () => {
-      try {
-        // Import Leaflet
-        await import('leaflet')
-        setIsLeafletLoaded(true)
-      } catch (error) {
-        console.error('Failed to load Leaflet:', error)
-      }
+    // Dynamically import Leaflet only on client side
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((leaflet) => {
+        // Fix default marker icons
+        delete (leaflet.Icon.Default.prototype as any)._getIconUrl
+        leaflet.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        })
+        setL(leaflet.default || leaflet)
+      }).catch(console.error)
     }
-
-    loadLeaflet()
   }, [])
 
   const handleFindNearMe = () => {
@@ -85,17 +76,17 @@ export default function PropertyMap({
       return
     }
 
-    toast.loading('Finding your location...')
+    const toastId = toast.loading('Finding your location...')
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
         setUserLocation([latitude, longitude])
-        toast.dismiss()
+        toast.dismiss(toastId)
         toast.success('Location found!')
       },
       (error) => {
-        toast.dismiss()
+        toast.dismiss(toastId)
         toast.error('Unable to retrieve your location')
         console.error('Geolocation error:', error)
       },
@@ -105,17 +96,15 @@ export default function PropertyMap({
 
   const getMarkerColor = (property: Property): string => {
     switch (property.availability) {
-      case 'available': return '#3b82f6' // Blue
-      case 'reserved': return '#f59e0b' // Amber
-      case 'rented': return '#ef4444' // Red
-      default: return '#6b7280' // Gray
+      case 'available': return '#3b82f6'
+      case 'reserved': return '#f59e0b'
+      case 'rented': return '#ef4444'
+      default: return '#6b7280'
     }
   }
 
   const createCustomIcon = (color: string) => {
-    if (!isLeafletLoaded || typeof window === 'undefined') {
-      return L.divIcon({ html: '' })
-    }
+    if (!L || typeof window === 'undefined') return null
     
     return L.divIcon({
       html: `
@@ -135,16 +124,14 @@ export default function PropertyMap({
           </svg>
         </div>
       `,
-      className: 'custom-marker',
-      iconSize: [24, 24],
-      iconAnchor: [12, 24]
+      className: '',
+      iconSize: [24, 24] as [number, number],
+      iconAnchor: [12, 24] as [number, number]
     })
   }
 
   const createUserIcon = () => {
-    if (!isLeafletLoaded || typeof window === 'undefined') {
-      return L.divIcon({ html: '' })
-    }
+    if (!L || typeof window === 'undefined') return null
     
     return L.divIcon({
       html: `
@@ -166,44 +153,42 @@ export default function PropertyMap({
             border-radius: 50%;
           "></div>
         </div>
-        <style>
-          @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-          }
-          .pulse-animation {
-            animation: pulse 2s infinite;
-          }
-        </style>
       `,
-      className: 'user-marker pulse-animation',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
+      className: '',
+      iconSize: [32, 32] as [number, number],
+      iconAnchor: [16, 32] as [number, number]
     })
   }
 
-  // Don't render on server
-  if (!isClient || !isLeafletLoaded) {
+  // Don't render anything on server
+  if (!isClient || !L) {
     return (
-      <div className="h-96 bg-secondary/20 rounded-lg flex items-center justify-center">
-        <div className="text-center">
-          <MapPin className="size-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading map...</p>
+      <div className={`h-96 rounded-lg overflow-hidden border ${className}`}>
+        <div className="h-full bg-secondary/20 flex items-center justify-center">
+          <div className="text-center">
+            <MapPin className="size-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+            <p className="text-muted-foreground">Loading map...</p>
+          </div>
         </div>
       </div>
     )
   }
 
+  const validProperties = properties.filter(property => 
+    property.location?.coordinates && 
+    Array.isArray(property.location.coordinates) && 
+    property.location.coordinates.length === 2
+  )
+
   return (
-    <div className="relative">
-      {/* Find Near Me Button */}
+    <div className={`relative ${className}`}>
       {showFindNearMe && (
         <div className="absolute top-4 right-4 z-[1000]">
           <Button
             onClick={handleFindNearMe}
             size="sm"
-            className="gap-2 shadow-lg"
+            className="gap-2 shadow-lg bg-white hover:bg-gray-50 text-gray-900"
+            variant="outline"
           >
             <Navigation className="size-4" />
             Find Near Me
@@ -211,7 +196,6 @@ export default function PropertyMap({
         </div>
       )}
 
-      {/* Map Container */}
       <div className="h-96 rounded-lg overflow-hidden border">
         <MapContainer
           center={userLocation || center}
@@ -224,59 +208,56 @@ export default function PropertyMap({
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
           />
           
-          <AttributionControl 
-            position="bottomright"
-          />
+          <AttributionControl position="bottomright" />
           
-          {/* User Location Marker */}
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={createUserIcon()}
-            >
+          {userLocation && createUserIcon() && (
+            <Marker position={userLocation} icon={createUserIcon()!}>
               <Popup>
                 <div className="p-2">
                   <strong>Your Location</strong>
                   <p className="text-sm text-muted-foreground">
-                    {userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}
+                    {userLocation[0].toFixed(6)}, {userLocation[1].toFixed(6)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Zoom in to see nearby properties
                   </p>
                 </div>
               </Popup>
             </Marker>
           )}
 
-          {/* Property Markers */}
-          {properties.map((property) => {
-            const coords = property.location?.coordinates || center
-            if (!coords || !Array.isArray(coords) || coords.length !== 2) {
-              console.warn(`Invalid coordinates for property ${property.id}:`, coords)
-              return null
-            }
+          {validProperties.map((property) => {
+            const coords = property.location.coordinates as [number, number]
+            const icon = createCustomIcon(getMarkerColor(property))
+            
+            if (!icon) return null
             
             return (
-              <Marker
-                key={property.id}
-                position={coords as [number, number]}
-                icon={createCustomIcon(getMarkerColor(property))}
-              >
+              <Marker key={property.id} position={coords} icon={icon}>
                 <Popup>
                   <div className="w-64">
-                    {property.images && property.images.length > 0 && (
+                    {property.images?.[0] && (
                       <img
                         src={property.images[0]}
                         alt={property.title}
                         className="w-full h-32 object-cover rounded-lg mb-2"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
                       />
                     )}
-                    <h4 className="font-semibold text-sm">{property.title}</h4>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {property.location?.address || 'Address not available'}, {property.location?.city || 'City not available'}
+                    <h4 className="font-semibold text-sm line-clamp-1">{property.title}</h4>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      {property.location.address || 'Address not available'}, {property.location.city || 'City not available'}
                     </p>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold">₦{property.price?.toLocaleString() || '0'}</span>
-                      <span className={`text-xs px-2 py-1 rounded ${
+                      <span className="text-sm font-semibold">
+                        ₦{property.price?.toLocaleString('en-NG') || '0'}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded capitalize ${
                         property.availability === 'available'
                           ? 'bg-green-100 text-green-800'
                           : property.availability === 'reserved'
@@ -289,11 +270,11 @@ export default function PropertyMap({
                     <div className="flex text-xs text-muted-foreground gap-3">
                       <span>{property.bedrooms || 0} bed</span>
                       <span>{property.bathrooms || 0} bath</span>
-                      <span>{property.size || 0} sq ft</span>
+                      <span>{property.size ? `${property.size.toLocaleString()} sq ft` : 'Size N/A'}</span>
                     </div>
                     <a
                       href={`/properties/${property.id}`}
-                      className="block mt-3 text-center text-sm bg-primary text-primary-foreground py-1 px-3 rounded hover:bg-primary/90"
+                      className="block mt-3 text-center text-sm bg-primary text-primary-foreground py-1.5 px-3 rounded hover:bg-primary/90 transition-colors"
                     >
                       View Details
                     </a>
@@ -305,7 +286,6 @@ export default function PropertyMap({
         </MapContainer>
       </div>
 
-      {/* Map Legend */}
       <div className="flex flex-wrap gap-4 mt-4">
         <div className="flex items-center gap-2">
           <div className="size-4 rounded-full bg-[#3b82f6] border-2 border-white shadow"></div>
@@ -321,7 +301,9 @@ export default function PropertyMap({
         </div>
         {userLocation && (
           <div className="flex items-center gap-2">
-            <div className="size-4 rounded-full bg-[#10b981] border-2 border-white shadow animate-pulse"></div>
+            <div className="relative size-4">
+              <div className="absolute inset-0 rounded-full bg-[#10b981] border-2 border-white shadow"></div>
+            </div>
             <span className="text-sm">Your Location</span>
           </div>
         )}
