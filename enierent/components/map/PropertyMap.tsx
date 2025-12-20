@@ -10,7 +10,17 @@ import toast from 'react-hot-toast'
 // Dynamically import ALL Leaflet components with SSR disabled
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-96 w-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center">
+          <MapPin className="size-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Loading map...</p>
+        </div>
+      </div>
+    )
+  }
 )
 
 const TileLayer = dynamic(
@@ -51,6 +61,7 @@ export default function PropertyMap({
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [L, setL] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setIsClient(true)
@@ -66,7 +77,13 @@ export default function PropertyMap({
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         })
         setL(leaflet.default || leaflet)
-      }).catch(console.error)
+        setIsLoading(false)
+      }).catch((error) => {
+        console.error('Failed to load Leaflet:', error)
+        setIsLoading(false)
+      })
+    } else {
+      setIsLoading(false)
     }
   }, [])
 
@@ -160,8 +177,8 @@ export default function PropertyMap({
     })
   }
 
-  // Don't render anything on server
-  if (!isClient || !L) {
+  // Don't render anything on server - return consistent placeholder
+  if (!isClient || isLoading) {
     return (
       <div className={`h-96 rounded-lg overflow-hidden border ${className}`}>
         <div className="h-full bg-secondary/20 flex items-center justify-center">

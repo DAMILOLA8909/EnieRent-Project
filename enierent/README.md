@@ -72,6 +72,25 @@
 
 - 👥 Role-Based Access - Different dashboards for tenants/landlords
 
+#### 💳 Booking System
+- Secure payment simulation
+- Booking management
+- Receipt generation
+- Success workflows
+
+#### 🎨 User Experience
+- Dark/Light mode support
+- Smooth animations with Framer Motion
+- Responsive design
+- Real-time chat simulation
+
+#### 🔧 Technical Features
+- Type-safe with TypeScript
+- Component library with shadcn/ui
+- Optimized performance
+- SEO optimized
+
+
 #### 🏠 Property Management
 
 - 📝 Property Details - Comprehensive information pages
@@ -177,30 +196,115 @@ Password: demo123
 
 ```pgsql
 enierent/
-├── app/                    # Next.js 14 App Router
-│   ├── (auth)/           # Authentication routes
+├── public/
+│   ├── images/                    # Property images, logos, etc.
+│   └── avatars/                   # User profile pictures
+├── app/
+│   ├── (auth)/                    # Authentication pages
 │   │   ├── login/
+│   │   │   └── page.tsx
 │   │   └── register/
-│   ├── dashboard/        # Protected dashboard routes
-│   ├── properties/       # Property pages
-│   │   ├── [id]/        # Single property dynamic route
-│   │   └── page.tsx     # Property listing page
-│   ├── layout.tsx       # Root layout
-│   └── page.tsx         # Home page
-├── components/           # React components
-│   ├── ui/             # Reusable UI components
-│   ├── layout/         # Layout components
-│   ├── properties/     # Property-related components
-│   ├── home/          # Home page components
-│   └── auth/          # Authentication components
-├── lib/                # Utilities and stores
-│   ├── store.ts       # Property Zustand store
-│   ├── auth-store.ts  # Authentication store
-│   └── utils.ts       # Helper functions
-├── types/              # TypeScript definitions
-├── data/              # Mock data and constants
-├── public/            # Static assets
-└── middleware.ts      # Next.js middleware
+│   │       └── page.tsx
+│   ├── properties/
+│   │   ├── [id]/
+│   │   │   └── page.tsx           # Your existing page
+│   │   ├── map/
+│   │   │   └── page.tsx
+│   │   ├── success/               # NEW: Payment success page
+│   │   │   └── [bookingId]/
+│   │   │       └── page.tsx
+│   │   └── page.tsx
+│   ├── search/
+│   │   └── page.tsx
+│   ├── chat/
+│   │   └── page.tsx
+│   ├── dashboard/
+│   │   └── page.tsx
+│   ├── page.tsx
+│   ├── layout.tsx
+│   └── globals.css
+├── components/
+│   ├── ui/                        # Reusable UI components
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── input.tsx
+│   │   ├── badge.tsx
+│   │   ├── tabs.tsx
+│   │   ├── textarea.tsx
+│   │   ├── dialog.tsx
+│   │   ├── toast.tsx
+│   │   ├── skeleton.tsx
+│   │   └── separator.tsx
+│   ├── layout/
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── LayoutWrapper.tsx
+│   ├── properties/
+│   │   ├── PropertyCard.tsx
+│   │   ├── SinglePropertyPage.tsx   # Will be updated
+│   │   ├── PropertyImageGallery.tsx # Will be updated
+│   │   ├── FilterSidebar.tsx
+│   │   ├── SortDropdown.tsx
+│   │   ├── ContactModal.tsx
+│   │   ├── ScheduleModal.tsx
+│   │   └── SimilarProperties.tsx
+│   ├── home/
+│   │   ├── HeroSection.tsx
+│   │   ├── FeaturedCategories.tsx
+│   │   ├── FeaturedProperties.tsx
+│   │   ├── Testimonials.tsx
+│   │   └── CTASection.tsx
+│   ├── dashboard/
+│   │   ├── AddPropertyForm.tsx
+│   │   ├── PropertyManagement.tsx
+│   │   └── FavoritesSection.tsx
+│   ├── map/
+│   │   └── PropertyMap.tsx
+│   ├── search/
+│   │   └── AISearch.tsx
+│   ├── chat/
+│   │   ├── ChatWindow.tsx
+│   │   └── ConversationsList.tsx
+│   ├── notifications/
+│   │   └── NotificationCenter.tsx
+│   ├── auth/
+│   │   └── ProtectedRoute.tsx
+│   ├── payments/                  # NEW: Payment components
+│   │   ├── PaymentModal.tsx
+│   │   └── SuccessScreen.tsx
+│   ├── virtual-tour/              # NEW: Virtual tour components
+│   │   ├── VirtualTourViewer.tsx
+│   │   └── VirtualTourButton.tsx
+│   ├── animations/                # NEW: Animation components
+│   │   ├── PageTransition.tsx
+│   │   ├── StaggeredList.tsx
+│   │   ├── HoverCard.tsx
+│   │   └── LoadingSpinner.tsx
+│   └── loading/                   # NEW: Loading skeletons
+│       ├── PropertyCardSkeleton.tsx
+│       └── PropertyListSkeleton.tsx
+├── lib/
+│   ├── store.ts                   # Zustand store for properties
+│   ├── auth-store.ts              # Zustand store for authentication
+│   ├── chat-store.ts              # Zustand store for chat
+│   ├── payments-store.ts          # NEW: Payment store
+│   ├── utils.ts                   # Utility functions
+│   └── optimization.ts            # NEW: Optimization utilities
+├── types/
+│   └── index.ts                   # TypeScript type definitions
+├── data/
+│   └── mockData.ts                # Mock data for development
+├── hooks/
+│   ├── use-toast.ts               # shadcn toast hook
+│   ├── use-enhanced-toast.ts      # NEW: Enhanced toast hook
+│   └── use-debounce.ts            # NEW: Debounce hook
+├── styles/
+├── next.config.js
+├── package.json
+├── tsconfig.json
+├── tailwind.config.js
+├── postcss.config.js
+└── README.md
 ```
 
 ---
